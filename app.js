@@ -4,7 +4,7 @@ var path = require('path');
 var morgan = require('morgan');
 var path = require('path');
 var express = require('express');
-var exphbs  = require('express-handlebars');
+var exphbs = require('express-handlebars');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var app = express();
@@ -17,29 +17,31 @@ app.engine('hbs', exphbs({
   defaultLayout: 'main'
 }));
 app.set('view engine', 'hbs');
+app.set('views', path.join(__dirname, 'views')); // set the views directory
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(morgan('tiny'));
 
-app.get('/', function(req, res) {
+app.get('/', function (req, res) {
   res.render('index');
 });
- 
-app.get('/rules', function(req, res){
+
+
+app.get('/rules', function (req, res) {
   res.render('rules');
 })
 
 var Card = require('./card');
 var Player = require('./player');
-var Game = require('./game'); 
+var Game = require('./game');
 var game = new Game();
 var count = 0; // Number of active socket connections
 var winner = null; // Username of winner
 
-io.on('connection', function(socket) {
+io.on('connection', function (socket) {
 
   if (game.isStarted) {
     // whenever a player joins an already started game, he or she becomes
@@ -62,13 +64,13 @@ io.on('connection', function(socket) {
     io.emit('restart', null);
   })
 
-  socket.on('username', function(data) {
+  socket.on('username', function (data) {
     if (winner) {
       console.log("should emit end")
       socket.emit('end', null);
       return;
     }
-    if (typeof(data) === "string") {
+    if (typeof (data) === "string") {
       // new user joining the game
       try {
         socket.playerId = game.addPlayer(data);
@@ -79,13 +81,13 @@ io.on('connection', function(socket) {
         });
         io.emit('updateGame', getGameState());
       }
-      catch(err){
+      catch (err) {
         console.error(err);
         socket.emit('errorMessage', err.message);
         return;
       }
 
-    } else if (typeof(data) === "object") {
+    } else if (typeof (data) === "object") {
       if (data === null) {
         // no input yet
         console.log("no user input yet:", data);
@@ -105,7 +107,7 @@ io.on('connection', function(socket) {
           socket.emit('username', false);
         }
       }
-      
+
 
     } else {
       // invalid data
@@ -116,9 +118,9 @@ io.on('connection', function(socket) {
 
   });
 
-  socket.on('start', function() {
+  socket.on('start', function () {
     if (winner) {
-      
+
       socket.emit('end', null);
       return;
     }
@@ -130,16 +132,16 @@ io.on('connection', function(socket) {
         io.emit('start', null);
         io.emit('updateGame', getGameState());
       }
-      catch(err) {
+      catch (err) {
         socket.emit('errorMessage', err.message);
         return;
       }
     }
   });
 
-  socket.on('playCard', function() {
+  socket.on('playCard', function () {
     if (winner) {
-      
+
       socket.emit('end', null);
       return;
     }
@@ -149,7 +151,7 @@ io.on('connection', function(socket) {
       try {
         var obj = game.playCard(socket.playerId);
       }
-      catch(err) {
+      catch (err) {
         socket.emit('errorMessage', err.message);
         return;
       }
@@ -160,9 +162,9 @@ io.on('connection', function(socket) {
     io.emit('updateGame', getGameState());
   });
 
-  socket.on('slap', function() {
+  socket.on('slap', function () {
     if (winner) {
-      
+
       socket.emit('end', null);
       return;
     }
@@ -178,7 +180,7 @@ io.on('connection', function(socket) {
         console.log("state:", state);
         var userName = state.currentPlayerUsername;
         if (obj.winning && state.playerOrder.length === 1) {
-          
+
           winner = game.players[state.playerOrder[0]].username;
           console.log("weird winner:", winner);
 
@@ -199,7 +201,7 @@ io.on('connection', function(socket) {
         io.emit('updateGame', getGameState());
 
       }
-      catch(err) {
+      catch (err) {
         socket.emit('errorMessage', err.message);
       }
     }
@@ -218,13 +220,13 @@ io.on('connection', function(socket) {
     }
     if (game.isStarted) {
       currentPlayerUsername = game.players[game.playerOrder[0]].username;
-    } 
+    }
     else {
       currentPlayerUsername = 'Game has not started yet';
     }
     var names = [];
     for (var key in game.players) {
-       names.push(game.players[key].username);
+      names.push(game.players[key].username);
     }
     playersInGame = names.join(', ');
 
@@ -243,6 +245,6 @@ io.on('connection', function(socket) {
 });
 
 var port = process.env.PORT || 3000;
-http.listen(port, function(){
+http.listen(port, function () {
   console.log('Express started. Listening on %s', port);
 });
